@@ -10,7 +10,8 @@
     "deploy": "hardhat run scripts/deploy.js --network hardhat",
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
-    "format": "prettier --write 'contracts/**/*.sol'"
+    "format": "prettier --write 'contracts/**/*.sol'",
+    "husky-prepare": "husky install"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.0",
