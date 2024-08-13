@@ -33,6 +33,16 @@ contract Staking {
     }
 
     /**
+     * @dev Modifier to make a function callable only by the owner
+     * @notice Restricts the usage of the function to the owner of the contract
+     * @dev Reverts with an error message if the caller is not the owner
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can call this function");
+        _;
+    }
+
+    /**
      * @notice Stake a certain amount of ERC20 tokens
      * @param _amount The amount of tokens to stake
      * @dev The function transfers tokens from the user's account to the contract
@@ -57,7 +67,7 @@ contract Staking {
      * @notice Set Annual Percentage Yield value
      * @param _APY The Annual Percentage Yield used to calculate rewards
      */
-    function setAPY(uint256 _APY) public {
+    function setAPY(uint256 _APY) public onlyOwner {
         APY = _APY;
     }
 }
