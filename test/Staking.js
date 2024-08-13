@@ -42,17 +42,17 @@ describe("Staking", () => {
 
     describe("APY", () => {
        it("Should get default APY value", async () => {
-           expect(await staking.APY()).to.equal(1);
+           expect(await staking.apy()).to.equal(1);
        });
 
        it("Should set new APY value", async () => {
-           await staking.setAPY(2);
-           expect(await staking.APY()).to.equal(2);
+           await staking.setApy(2);
+           expect(await staking.apy()).to.equal(2);
        });
 
        it("Should failed if someone else than the owner set APY", async () => {
-           await expect(staking.connect(Tom).setAPY(2))
-               .to.be.revertedWith("Only the owner can call this function");
+           await expect(staking.connect(Tom).setApy(2))
+               .to.be.revertedWithCustomError(staking, "OnlyOwner");
        });
     });
 
@@ -79,7 +79,7 @@ describe("Staking", () => {
         it("Shouldn't stake if amount isn't greater than 0", async () => {
             const amount = ethers.utils.parseEther("0");
             await expect(staking.connect(Jane).stake(amount))
-                .to.be.revertedWith("Amount must be greater than 0");
+                .to.be.revertedWithCustomError(staking,"AmountMustBeGreaterThanZero");
         });
     });
 
@@ -104,7 +104,7 @@ describe("Staking", () => {
             await token.connect(Jane).approve(staking.address, stakeAmount);
             await staking.connect(Jane).stake(stakeAmount);
             await expect(staking.connect(Jane).withdrawing(withdrawingAmount))
-                .to.revertedWith("Insufficient balance");
+                .to.revertedWithCustomError(staking, "InsufficientBalance");
         });
 
         it("Shouldn't withdrawing mis amount isn't grater than 0", async () => {
@@ -113,7 +113,7 @@ describe("Staking", () => {
             await token.connect(Jane).approve(staking.address, stakeAmount);
             await staking.connect(Jane).stake(stakeAmount);
             await expect(staking.connect(Jane).withdrawing(withdrawingAmount))
-                .to.revertedWith("Amount must be greater than zero");
+                .to.revertedWithCustomError(staking, "AmountMustBeGreaterThanZero");
         });
     });
 

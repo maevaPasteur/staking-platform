@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title ERC20 Token Contract
@@ -15,7 +15,7 @@ contract Token is ERC20 {
      * @param symbol The symbol of the token
      * @dev The initial supply is set to 1,000,000 tokens with decimals taken into account (e.g., 1,000,000 * 10 ** decimals).
      */
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
-        _mint(msg.sender, 1000000 * 10 ** uint(decimals()));
+    constructor(string memory name, string memory symbol) public ERC20(name, symbol) {
+        _mint(msg.sender, 1000000 * 10 ** uint256(decimals()));
     }
 }
