@@ -56,6 +56,67 @@ describe("Staking", () => {
        });
     });
 
+    describe("Stake", () => {
+        beforeEach(async () => {
+            // Transfer to Jane 10 tokens
+            await token.transfer(Jane.address, ethers.utils.parseEther("10"));
+        });
+
+        it("Should stake from Jane account", async () => {
+            const amount = ethers.utils.parseEther("10");
+            await token.connect(Jane).approve(staking.address, amount);
+            await staking.connect(Jane).stake(amount);
+            expect(await staking.getUserBalance(Jane.address)).to.equal(amount);
+        });
+
+        it("Shouldn't stake if amount is greater than Jane's balance", async () => {
+            const amount = ethers.utils.parseEther("15");
+            await token.connect(Jane).approve(staking.address, amount);
+            await expect(staking.connect(Jane).stake(amount))
+                .to.be.revertedWith("ERC20: transfer amount exceeds balance");
+        });
+
+        it("Shouldn't stake if amount isn't greater than 0", async () => {
+            const amount = ethers.utils.parseEther("0");
+            await expect(staking.connect(Jane).stake(amount))
+                .to.be.revertedWith("Amount must be greater than 0");
+        });
+    });
+
+    describe("Withdrawing", () => {
+        beforeEach(async () => {
+            // Transfer to Jane 10 tokens
+            await token.transfer(Jane.address, ethers.utils.parseEther("10"));
+        });
+
+        it("Should withdrawing from Jane account", async () => {
+            const amount = ethers.utils.parseEther("10");
+            await token.connect(Jane).approve(staking.address, amount);
+            await staking.connect(Jane).stake(amount);
+            expect(await staking.getUserBalance(Jane.address)).to.equal(amount);
+            await staking.connect(Jane).withdrawing(amount);
+            expect(await staking.getUserBalance(Jane.address)).to.equal(0);
+        });
+
+        it("Shouldn't withdrawing more than Jane balance", async () => {
+            const stakeAmount = ethers.utils.parseEther("10");
+            const withdrawingAmount = ethers.utils.parseEther("20");
+            await token.connect(Jane).approve(staking.address, stakeAmount);
+            await staking.connect(Jane).stake(stakeAmount);
+            await expect(staking.connect(Jane).withdrawing(withdrawingAmount))
+                .to.revertedWith("Insufficient balance");
+        });
+
+        it("Shouldn't withdrawing mis amount isn't grater than 0", async () => {
+            const stakeAmount = ethers.utils.parseEther("10");
+            const withdrawingAmount = ethers.utils.parseEther("0");
+            await token.connect(Jane).approve(staking.address, stakeAmount);
+            await staking.connect(Jane).stake(stakeAmount);
+            await expect(staking.connect(Jane).withdrawing(withdrawingAmount))
+                .to.revertedWith("Amount must be greater than zero");
+        });
+    });
+
     describe("User balances", () => {
         beforeEach(async () => {
             // Transfer to Jane 10 tokens
@@ -68,26 +129,46 @@ describe("Staking", () => {
         });
 
         it("Should get user balance after stake", async () => {
+            const initialBalanceAmount = await token.balanceOf(Jane.address);
+
             // Stake
             const stakeAmount = ethers.utils.parseEther("10");
             await token.connect(Jane).approve(staking.address, stakeAmount);
             await staking.connect(Jane).stake(stakeAmount);
 
-            // Get Jane balance
-            const userBalance = await staking.getUserBalance(Jane.address);
-            expect(userBalance).to.equal(stakeAmount);
+            // Verify Jane balance
+            expect(await staking.getUserBalance(Jane.address)).to.equal(stakeAmount);
+            expect(await token.balanceOf(Jane.address)).to.equal(0);
         });
 
-       it("Shouldn't allow stake if amount is greater than user balance", async () => {
-           // Stake
-           const stakeAmount = ethers.utils.parseEther("1000");
-           await token.connect(Jane).approve(staking.address, stakeAmount);
-           await expect(staking.connect(Jane).stake(stakeAmount))
-               .to.be.revertedWith("ERC20: transfer amount exceeds balance");
+        it("Shouldn't allow stake if amount is greater than user balance", async () => {
+            const initialBalanceAmount = await token.balanceOf(Jane.address);
 
-           // Verify that Jane balance stay at 0 after the fail
-           const userBalance = await staking.getUserBalance(Jane.address);
-           expect(userBalance).to.equal(0);
-       });
+            // Stake
+            const stakeAmount = ethers.utils.parseEther("1000");
+            await token.connect(Jane).approve(staking.address, stakeAmount);
+            await expect(staking.connect(Jane).stake(stakeAmount))
+                .to.be.revertedWith("ERC20: transfer amount exceeds balance");
+
+            // Verify that Jane balance stay at 0 after the fail
+            expect(await staking.getUserBalance(Jane.address)).to.equal(0);
+            expect(await token.balanceOf(Jane.address)).to.equal(initialBalanceAmount);
+        });
+
+        it("Should get user balance after withdrawing", async () => {
+            const amount = ethers.utils.parseEther("10");
+            const initialBalanceAmount = await token.balanceOf(Jane.address);
+
+            // Stake
+            await token.connect(Jane).approve(staking.address, amount);
+            await staking.connect(Jane).stake(amount);
+
+            // Withdrawing
+            await staking.connect(Jane).withdrawing(amount)
+
+            // Verify Jane's balance
+            expect(await staking.getUserBalance(Jane.address)).to.equal(0);
+            expect(await token.balanceOf(Jane.address)).to.equal(initialBalanceAmount);
+        });
     });
 });
