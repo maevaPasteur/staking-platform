@@ -16,6 +16,9 @@ contract Staking {
     /// @notice The ERC20 token used for staking
     IERC20 public stakingToken;
 
+    /// @notice The Annual Percentage Yields used to calculate rewards
+    uint256 public APY = 1;
+
     /// @notice Mapping to store the balances of staked tokens for each user
     mapping(address => uint256) public balances;
 
@@ -27,6 +30,16 @@ contract Staking {
     constructor(Token _stakingToken) {
         stakingToken = _stakingToken;
         owner = msg.sender;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only by the owner
+     * @notice Restricts the usage of the function to the owner of the contract
+     * @dev Reverts with an error message if the caller is not the owner
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can call this function");
+        _;
     }
 
     /**
@@ -48,5 +61,13 @@ contract Staking {
      */
     function getUserBalance(address _userAddress) external view returns (uint256) {
         return balances[_userAddress];
+    }
+
+    /**
+     * @notice Set Annual Percentage Yield value
+     * @param _APY The Annual Percentage Yield used to calculate rewards
+     */
+    function setAPY(uint256 _APY) public onlyOwner {
+        APY = _APY;
     }
 }

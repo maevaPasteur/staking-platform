@@ -39,4 +39,20 @@ describe("Staking", () => {
             expect(await stakingToken.symbol()).to.equal("MTK");
         });
     });
+
+    describe("APY", () => {
+       it("Should get default APY value", async () => {
+           expect(await staking.APY()).to.equal(1);
+       });
+
+       it("Should set new APY value", async () => {
+           await staking.setAPY(2);
+           expect(await staking.APY()).to.equal(2);
+       });
+
+       it("Should failed if someone else than the owner set APY", async () => {
+           await expect(staking.connect(Tom).setAPY(2))
+               .to.be.revertedWith("Only the owner can call this function");
+       });
+    });
 });
