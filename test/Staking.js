@@ -55,4 +55,39 @@ describe("Staking", () => {
                .to.be.revertedWith("Only the owner can call this function");
        });
     });
+
+    describe("User balances", () => {
+        beforeEach(async () => {
+            // Transfer to Jane 10 tokens
+            await token.transfer(Jane.address, ethers.utils.parseEther("10"));
+        });
+
+        it("Should get empty user balance", async () => {
+            const userBalance = await staking.getUserBalance(Jane.address);
+            expect(userBalance).to.equal(0);
+        });
+
+        it("Should get user balance after stake", async () => {
+            // Stake
+            const stakeAmount = ethers.utils.parseEther("10");
+            await token.connect(Jane).approve(staking.address, stakeAmount);
+            await staking.connect(Jane).stake(stakeAmount);
+
+            // Get Jane balance
+            const userBalance = await staking.getUserBalance(Jane.address);
+            expect(userBalance).to.equal(stakeAmount);
+        });
+
+       it("Shouldn't allow stake if amount is greater than user balance", async () => {
+           // Stake
+           const stakeAmount = ethers.utils.parseEther("1000");
+           await token.connect(Jane).approve(staking.address, stakeAmount);
+           await expect(staking.connect(Jane).stake(stakeAmount))
+               .to.be.revertedWith("ERC20: transfer amount exceeds balance");
+
+           // Verify that Jane balance stay at 0 after the fail
+           const userBalance = await staking.getUserBalance(Jane.address);
+           expect(userBalance).to.equal(0);
+       });
+    });
 });
