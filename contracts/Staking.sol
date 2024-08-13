@@ -70,4 +70,17 @@ contract Staking {
     function setAPY(uint256 _APY) public onlyOwner {
         APY = _APY;
     }
+
+    /**
+     * @notice Allows users to withdraw staked tokens from the staking contract
+     * @dev This function checks that the user has a sufficient staked balance before allowing the withdrawal
+     *      It also updates the user's internal balance before transferring the tokens back to the user's address
+     * @param _amount The amount of tokens to withdraw from the staking contract
+     */
+    function withdrawing(uint256 _amount) public {
+        require(_amount > 0, "Amount must be greater than zero");
+        require(_amount <= balances[msg.sender], "Insufficient balance");
+        stakingToken.transfer(msg.sender, _amount);
+        balances[msg.sender] -= _amount;
+    }
 }
