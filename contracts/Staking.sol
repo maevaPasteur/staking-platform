@@ -16,6 +16,9 @@ contract Staking {
     /// @notice The ERC20 token used for staking
     IERC20 public stakingToken;
 
+    /// @notice The Annual Percentage Yields used to calculate rewards
+    uint256 public APY = 1;
+
     /// @notice Mapping to store the balances of staked tokens for each user
     mapping(address => uint256) public balances;
 
@@ -48,5 +51,13 @@ contract Staking {
      */
     function getUserBalance(address _userAddress) external view returns (uint256) {
         return balances[_userAddress];
+    }
+
+    /**
+     * @notice Set Annual Percentage Yield value
+     * @param _APY The Annual Percentage Yield used to calculate rewards
+     */
+    function setAPY(uint256 _APY) public {
+        APY = _APY;
     }
 }

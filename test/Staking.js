@@ -39,4 +39,15 @@ describe("Staking", () => {
             expect(await stakingToken.symbol()).to.equal("MTK");
         });
     });
+
+    describe("APY", () => {
+       it("Should get default APY value", async () => {
+           expect(await staking.APY()).to.equal(1);
+       });
+
+       it("Should set new APY value", async () => {
+           await staking.setAPY(2);
+           expect(await staking.APY()).to.equal(2);
+       });
+    });
 });
