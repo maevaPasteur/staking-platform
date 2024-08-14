@@ -7,7 +7,8 @@
     "test": "hardhat test",
     "clean": "hardhat clean",
     "node": "hardhat node",
-    "deploy": "hardhat run scripts/deploy.js --network hardhat",
+    "deploy": "npx hardhat run scripts/deploy.js --network rinkeby",
+    "coverage": "npx hardhat coverage",
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
     "format": "prettier --write 'contracts/**/*.sol'",
@@ -21,12 +22,14 @@
     "ethers": "^5.7.0"
   },
   "devDependencies": {
-    "hardhat": "^2.12.4",
+    "coveralls": "^3.1.1",
+    "hardhat": "^2.22.8",
     "husky": "^9.1.4",
     "lint-staged": "^15.2.9",
     "prettier": "^3.3.3",
     "prettier-plugin-solidity": "^1.3.1",
-    "solhint": "^5.0.3"
+    "solhint": "^5.0.3",
+    "solidity-coverage": "^0.8.12"
   },
   "husky": {
     "hooks": {
