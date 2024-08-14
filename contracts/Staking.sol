@@ -10,6 +10,19 @@ import { Token } from "./Token.sol";
  * @dev This contract interacts with an ERC20 token contract for staking.
  */
 contract Staking {
+    /**
+     * @dev Represents a user in the staking contract.
+     * @notice This structure holds information about a user's staked balance, the last time they withdrew funds, and the rewards they have accumulated.
+     */
+    struct User {
+        /// @dev The amount of tokens currently staked by the user.
+        uint256 balance;
+        /// @dev The timestamp of the last withdrawal made by the user.
+        uint256 lastWithdrawalDate;
+        /// @dev The total rewards accumulated by the user that have not yet been claimed or added to their staked balance.
+        uint256 rewards;
+    }
+
     /// @notice The address of the owner of the contract
     address public owner;
 
@@ -19,13 +32,14 @@ contract Staking {
     /// @notice The Annual Percentage Yields used to calculate rewards
     uint256 public apy = 1;
 
-    /// @notice Mapping to store the balances of staked tokens for each user
-    mapping(address => uint256) public balances;
+    /// @notice Array of user with their balance, last withdrawal date & rewards earned
+    mapping(address => User[]) public users;
 
     // Custom errors
     error OnlyOwner();
     error AmountMustBeGreaterThanZero();
     error InsufficientBalance(uint256 requested, uint256 available);
+    error UserDoesntExist();
 
     /**
      * @notice Constructor to initialize the staking contract
@@ -59,7 +73,22 @@ contract Staking {
             revert AmountMustBeGreaterThanZero();
         }
         stakingToken.transferFrom(msg.sender, address(this), _amount);
-        balances[msg.sender] += _amount;
+        User[] storage userRecords = users[msg.sender];
+        if (userRecords.length == 0) {
+            // Create user if he doesn't exist
+            userRecords.push(
+                User({
+                    balance: _amount,
+                    lastWithdrawalDate: block.timestamp,
+                    rewards: 0
+                })
+            );
+        } else {
+            // Update current user balance
+            User storage currentUser = userRecords[0];
+            currentUser.balance += _amount;
+            currentUser.lastWithdrawalDate = block.timestamp;
+        }
     }
 
     /**
@@ -70,7 +99,26 @@ contract Staking {
     function getUserBalance(
         address _userAddress
     ) external view returns (uint256) {
-        return balances[_userAddress];
+        User[] storage userRecords = users[_userAddress];
+        if (userRecords.length == 0) {
+            return 0;
+        }
+        return userRecords[0].balance;
+    }
+
+    /**
+     * @notice Get the rewards of a specific user.
+     * @param _userAddress The address of the user whose balance you want to query.
+     * @return The amount of tokens rewards by the user.
+     */
+    function getUserRewards(
+        address _userAddress
+    ) external view returns (uint256) {
+        User[] storage userRecords = users[_userAddress];
+        if (userRecords.length == 0) {
+            return 0;
+        }
+        return userRecords[0].rewards;
     }
 
     /**
@@ -92,10 +140,51 @@ contract Staking {
         if (_amount <= 0) {
             revert AmountMustBeGreaterThanZero();
         }
-        if (_amount > balances[msg.sender]) {
-            revert InsufficientBalance(_amount, balances[msg.sender]);
+        User[] storage userRecords = users[msg.sender];
+        if (userRecords.length == 0) {
+            revert UserDoesntExist();
         }
-        balances[msg.sender] -= _amount;
+        User storage currentUser = userRecords[0];
+        if (_amount > currentUser.balance) {
+            revert InsufficientBalance(_amount, currentUser.balance);
+        }
+
+        // Transfer token
         stakingToken.transfer(msg.sender, _amount);
+
+        // Update user infos
+        currentUser.balance -= _amount;
+
+        // Calculate user rewards
+        uint256 elapsedTime = block.timestamp - currentUser.lastWithdrawalDate;
+        uint256 rewards = (currentUser.balance * apy * elapsedTime) / (365 days * 100);
+        currentUser.rewards += rewards;
+
+        // Update user last withdrawing date
+        currentUser.lastWithdrawalDate = block.timestamp;
+    }
+
+    function claimingRewards() public {
+        User[] storage userRecords = users[msg.sender];
+        if (userRecords.length == 0) {
+            revert UserDoesntExist();
+        }
+
+        // Get user
+        User storage currentUser = userRecords[0];
+
+        // Calculate rewards
+        uint256 elapsedTime = block.timestamp - currentUser.lastWithdrawalDate;
+        uint256 rewards = (currentUser.balance * apy * elapsedTime) / (365 days * 100);
+        currentUser.rewards += rewards;
+
+        // Update last withdrawing date
+        currentUser.lastWithdrawalDate = block.timestamp;
+
+        // Add rewards to user balance
+        currentUser.balance += currentUser.rewards;
+
+        // Init user rewards
+        currentUser.rewards = 0;
     }
 }

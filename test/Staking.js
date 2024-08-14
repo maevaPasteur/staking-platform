@@ -171,4 +171,63 @@ describe("Staking", () => {
             expect(await token.balanceOf(Jane.address)).to.equal(initialBalanceAmount);
         });
     });
+
+    describe("Rewards", () => {
+        beforeEach(async () => {
+            // Set APY at 10%
+            await staking.setApy(10);
+
+            const stakeAmount = ethers.utils.parseEther("90");
+            await token.transfer(Jane.address, ethers.utils.parseEther("100"));
+            await token.connect(Jane).approve(staking.address, stakeAmount);
+            await staking.connect(Jane).stake(stakeAmount);
+
+            // Simulate 6 months of delay
+            const sixMonthsInSeconds = 6 * 30 * 24 * 60 * 60;
+            await ethers.provider.send("evm_increaseTime", [sixMonthsInSeconds]);
+            await ethers.provider.send("evm_mine");
+        });
+
+        it("Should accumulate rewards after stake and claim them", async () => {
+            const initialStakingBalance = await staking.getUserBalance(Jane.address);
+            const sixMonthsInSeconds = 6 * 30 * 24 * 60 * 60;
+            const stakeAmount = ethers.utils.parseEther("90");
+            const apy = await staking.apy();
+            const tolerance = ethers.utils.parseEther("0.00001");
+
+            // Claiming rewards
+            await staking.connect(Jane).claimingRewards();
+
+            // Calculate rewards
+            const expectedRewards = stakeAmount.mul(apy).mul(sixMonthsInSeconds).div(365 * 24 * 60 * 60).div(100);
+            const expectedStakeBalance = initialStakingBalance.add(expectedRewards);
+
+            // Verify new stake balance including rewards
+            expect(await staking.getUserBalance(Jane.address)).to.be.closeTo(expectedStakeBalance, tolerance);
+
+            // Verify that rewards have been reset to 0 after claiming
+            expect(await staking.getUserRewards(Jane.address)).to.equal(0);
+        });
+
+        it("Should accumulate rewards after withdrawing", async () => {
+            const stakeAmount = ethers.utils.parseEther("90");
+            const withdrawingAmount = ethers.utils.parseEther("80");
+            const sixMonthsInSeconds = 6 * 30 * 24 * 60 * 60;
+            const apy = await staking.apy();
+
+            // Set a small tolerance for comparison
+            const tolerance = ethers.utils.parseEther("0.00001")
+
+            // Withdrawing
+            await staking.connect(Jane).withdrawing(withdrawingAmount);
+
+            // Calculate rewards for the remaining 10 tokens after 6 months
+            const remainingStakeAmount = stakeAmount.sub(withdrawingAmount);
+            const expectedRewards = remainingStakeAmount.mul(apy).mul(sixMonthsInSeconds).div(365 * 24 * 60 * 60).div(100);
+
+            // Verify user rewards
+            expect(await staking.getUserRewards(Jane.address)).to.be.closeTo(expectedRewards, tolerance);
+        });
+    });
+
 });
