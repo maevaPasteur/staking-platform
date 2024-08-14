@@ -10,9 +10,16 @@ import { Token } from "./Token.sol";
  * @dev This contract interacts with an ERC20 token contract for staking.
  */
 contract Staking {
+    /**
+     * @dev Represents a user in the staking contract.
+     * @notice This structure holds information about a user's staked balance, the last time they withdrew funds, and the rewards they have accumulated.
+     */
     struct User {
+        /// @dev The amount of tokens currently staked by the user.
         uint256 balance;
+        /// @dev The timestamp of the last withdrawal made by the user.
         uint256 lastWithdrawalDate;
+        /// @dev The total rewards accumulated by the user that have not yet been claimed or added to their staked balance.
         uint256 rewards;
     }
 
@@ -32,7 +39,7 @@ contract Staking {
     error OnlyOwner();
     error AmountMustBeGreaterThanZero();
     error InsufficientBalance(uint256 requested, uint256 available);
-    error UserDoesntHaveBalance();
+    error UserDoesntExist();
 
     /**
      * @notice Constructor to initialize the staking contract
@@ -100,6 +107,21 @@ contract Staking {
     }
 
     /**
+     * @notice Get the rewards of a specific user.
+     * @param _userAddress The address of the user whose balance you want to query.
+     * @return The amount of tokens rewards by the user.
+     */
+    function getUserRewards(
+        address _userAddress
+    ) external view returns (uint256) {
+        User[] storage userRecords = users[_userAddress];
+        if (userRecords.length == 0) {
+            return 0;
+        }
+        return userRecords[0].rewards;
+    }
+
+    /**
      * @notice Set the Annual Percentage Yield (APY) value.
      * @dev The APY is used to calculate rewards.
      * @param _apy The Annual Percentage Yield used to calculate rewards.
@@ -120,7 +142,7 @@ contract Staking {
         }
         User[] storage userRecords = users[msg.sender];
         if (userRecords.length == 0) {
-            revert UserDoesntHaveBalance();
+            revert UserDoesntExist();
         }
         User storage currentUser = userRecords[0];
         if (_amount > currentUser.balance) {
@@ -132,6 +154,37 @@ contract Staking {
 
         // Update user infos
         currentUser.balance -= _amount;
+
+        // Calculate user rewards
+        uint256 elapsedTime = block.timestamp - currentUser.lastWithdrawalDate;
+        uint256 rewards = (currentUser.balance * apy * elapsedTime) / (365 days * 100);
+        currentUser.rewards += rewards;
+
+        // Update user last withdrawing date
         currentUser.lastWithdrawalDate = block.timestamp;
+    }
+
+    function claimingRewards() public {
+        User[] storage userRecords = users[msg.sender];
+        if (userRecords.length == 0) {
+            revert UserDoesntExist();
+        }
+
+        // Get user
+        User storage currentUser = userRecords[0];
+
+        // Calculate rewards
+        uint256 elapsedTime = block.timestamp - currentUser.lastWithdrawalDate;
+        uint256 rewards = (currentUser.balance * apy * elapsedTime) / (365 days * 100);
+        currentUser.rewards += rewards;
+
+        // Update last withdrawing date
+        currentUser.lastWithdrawalDate = block.timestamp;
+
+        // Add rewards to user balance
+        currentUser.balance += currentUser.rewards;
+
+        // Init user rewards
+        currentUser.rewards = 0;
     }
 }
