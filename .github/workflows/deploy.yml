@@ -27,9 +27,6 @@ jobs:
       - name: Run tests
         run: npx hardhat test
 
-      - name: Deploy contracts
-        run: npx hardhat run scripts/deploy.js --network rinkeby
-
       - name: Upload coverage to Coveralls
         run: |
           npm install --save-dev coveralls
