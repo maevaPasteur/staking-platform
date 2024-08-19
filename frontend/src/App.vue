@@ -16,8 +16,10 @@
                                 :stake="stake"
                                 :withdrawing="withdrawing"
                                 :getSignerAddress="getSignerAddress"
-                                :getSignerBalance="getSignerBalance"
+                                :getSignerEthersBalance="getSignerEthersBalance"
                                 :getSignerStakingBalance="getSignerStakingBalance"
+                                :getSignerTokenBalance="getSignerTokenBalance"
+                                :transferERC20Tokens="transferERC20Tokens"
                         />
                     </v-col>
 
@@ -61,12 +63,14 @@ const {
     isInitialized,
     apy,
     stakingBalance,
-    getSignerBalance,
+    getSignerEthersBalance,
     setAPY,
     stake,
     withdrawing,
     getSignerAddress,
     getSignerStakingBalance,
+    getSignerTokenBalance,
+    transferERC20Tokens,
 } = useStakingContract();
 
 const newAPY = ref();

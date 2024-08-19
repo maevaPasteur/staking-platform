@@ -11,11 +11,22 @@
                     <h3>{{ name }}</h3>
                 </v-col>
                 <v-col class="text-no-wrap text-left" cols="5" sm="3">
-                    <p>Balance: <strong>{{ balanceFormatted }} ETH</strong></p>
-                    <p>Stake balance: <strong>{{ stakeBalanceFormatted }} tokens</strong></p>
+                    <p>Balance: <strong>{{ formatBalance(ethersBalance) }} ETH</strong></p>
+                    <p>Token balance: <strong>{{ formatBalance(tokenBalance) }} tokens</strong></p>
+                    <p>Stake balance: <strong>{{ formatBalance(stakeBalance) }} tokens</strong></p>
                 </v-col>
             </v-row>
             <v-list lines="two">
+                <v-alert v-if="errorMessage?.length" class="mt-2" type="error" closable @input="errorMessage = null">
+                    {{ errorMessage }}
+                </v-alert>
+                <v-list-item>
+                    <h4>Get Tokens</h4>
+                    <v-form @submit.prevent="handleTokenSubmit" class="user__form">
+                        <v-number-input v-model="tokenAmount" v-bind="inputAttrs"/>
+                        <v-btn color="primary" variant="tonal" type="submit">Get {{ tokenAmount }} tokens</v-btn>
+                    </v-form>
+                </v-list-item>
                 <v-list-item>
                     <h4>Stake</h4>
                     <v-form @submit.prevent="handleStakeSubmit" class="user__form">
@@ -36,11 +47,11 @@
 </template>
 
 <script setup>
-import {ref, onMounted, watch} from "vue";
+import { ref, onMounted } from "vue";
 import { ethers } from 'ethers';
 import { VNumberInput } from 'vuetify/labs/VNumberInput'
 
-const props = defineProps(["name", "signer", "getSignerBalance", "avatar", "stake", "withdrawing", "getSignerAddress", "getSignerStakingBalance"]);
+const props = defineProps(["name", "signer", "getSignerEthersBalance", "avatar", "stake", "withdrawing", "getSignerAddress", "getSignerStakingBalance", "getSignerTokenBalance", "transferERC20Tokens"]);
 
 const inputAttrs = {
     type: "number",
@@ -52,73 +63,67 @@ const inputAttrs = {
 
 const stakeAmount = ref(0);
 const withdrawingAmount = ref(0);
-const balance = ref(null);
-const balanceFormatted = ref(0);
+const tokenAmount = ref(0);
+const ethersBalance = ref(null);
 const stakeBalance = ref(0);
-const stakeBalanceFormatted = ref(0);
+const tokenBalance = ref(0);
 const address = ref(null);
+const errorMessage = ref(null);
 
 const checkAddress = async () => {
-    try {
-        if (!address.value) address.value = await props.getSignerAddress(props.signer);
-    } catch (error) {
-        console.error('Failed to fetch signer address:', error);
-    }
+    if (!address.value) address.value = await props.getSignerAddress(props.signer);
 }
 
-const getBalance = async () => {
-    await checkAddress();
-    try {
-        balance.value = await props.getSignerBalance(address.value);
-    } catch (error) {
-        console.error("Error fetching balance:", error);
-    }
+const getEthersBalance = async () => {
+    ethersBalance.value = await props.getSignerEthersBalance(address.value);
 }
 
 const getStakingBalance = async () => {
-    await checkAddress();
+    stakeBalance.value = await props.getSignerStakingBalance(address.value);
+}
+
+const getTokenBalance = async () => {
+    tokenBalance.value = await props.getSignerTokenBalance(address.value)
+}
+
+const handleTokenSubmit = async () => {
     try {
-        stakeBalance.value = await props.getSignerStakingBalance(address.value);
-    } catch (error) {
-        console.error("Error fetching staking balance:", error);
+        await props.transferERC20Tokens(tokenAmount.value, props.signer, address.value);
+        await getTokenBalance();
+    } catch(error) {
+        errorMessage.value = error;
     }
 }
 
 const handleStakeSubmit = async () => {
-    await checkAddress();
     try {
-        await props.stake(stakeAmount.value, props.signer, address.value);
-        console.log('success');
-        await getBalance();
-        console.log('new Baln', balance.value)
+        await props.stake(stakeAmount.value, props.signer);
+        await getTokenBalance();
+        await getStakingBalance();
     } catch(error) {
-        console.error('Error staking:', error)
+        errorMessage.value = error;
     }
 }
 
 const handleWithdrawingSubmit = async () => {
-    await checkAddress();
     try {
-        await props.withdrawing(stakeAmount.value, address.value);
-        console.log('success');
-        await getBalance();
-        console.log('new Baln', balance.value)
+        await props.withdrawing(withdrawingAmount.value, props.signer);
+        await getTokenBalance();
+        await getStakingBalance();
     } catch(error) {
-        console.error('Error withdrawing:', error)
+        errorMessage.value = error;
     }
 }
 
-watch(balance, (value) => {
-    balanceFormatted.value = value ? ethers.utils.formatEther(value) : 0
-}, {immediate: true});
-
-watch(stakeBalance, (value) => {
-    stakeBalanceFormatted.value = value ? ethers.utils.formatEther(value) : 0
-}, {immediate: true});
+const formatBalance = value => {
+    return value ? parseFloat(ethers.utils.formatEther(value)).toFixed(2) : '0.00';
+}
 
 onMounted(async () => {
-    await getBalance();
+    await checkAddress();
+    await getEthersBalance();
     await getStakingBalance();
+    await getTokenBalance();
 });
 </script>
 

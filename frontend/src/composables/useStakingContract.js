@@ -17,6 +17,26 @@ export function useStakingContract() {
   const apy = ref(null);
   const stakingBalance = ref(null);
 
+  const convertIntoUnits = (amount) => {
+    return ethers.utils.parseUnits(amount.toString(), 18);
+  };
+
+  const getErrorMessage = (error) => {
+    const errorObject = JSON.parse(JSON.stringify(error));
+    return errorObject?.reason || error;
+  };
+
+  const setGasLimit = async (contract, signer, address) => {
+    try {
+      await contract
+        .connect(toRaw(signer))
+        .approve(address, convertIntoUnits(1));
+    } catch (error) {
+      console.error("Error settings gas limit:", error);
+      throw error;
+    }
+  };
+
   const getSignerAddress = async (signer) => {
     try {
       return await toRaw(signer).getAddress();
@@ -38,7 +58,7 @@ export function useStakingContract() {
     }
   };
 
-  const getSignerBalance = async (address) => {
+  const getSignerEthersBalance = async (address) => {
     try {
       return await provider.getBalance(address);
     } catch (error) {
@@ -49,12 +69,19 @@ export function useStakingContract() {
 
   const getSignerStakingBalance = async (address) => {
     try {
-      console.log("address", address);
       const amount = await stakingContract.getUserBalance(address);
-      console.log("amount", amount);
+      return amount;
     } catch (error) {
       console.error("Error fetching signer staking balance:", error);
       throw error;
+    }
+  };
+
+  const getSignerTokenBalance = async (address) => {
+    try {
+      return await tokenContract.balanceOf(address);
+    } catch (error) {
+      console.log("Error fetching signer token balance:", error);
     }
   };
 
@@ -82,34 +109,39 @@ export function useStakingContract() {
     }
   };
 
-  const stake = async (amount, signer, address) => {
+  const stake = async (amount, signer) => {
     try {
-      await tokenContract
-        .connect(toRaw(signer))
-        .approve(
-          stakingContract.address,
-          ethers.utils.parseUnits(amount.toString(), 18),
-        );
+      await setGasLimit(tokenContract, signer, stakingContract.address, amount);
       const tx = await stakingContract
         .connect(toRaw(signer))
-        .stake(ethers.utils.parseUnits(amount.toString(), 18));
+        .stake(convertIntoUnits(amount));
       await tx.wait();
     } catch (error) {
       console.error("Error staking tokens:", error);
-      throw error;
+      throw getErrorMessage(error);
     }
   };
 
-  const withdrawing = async (amount, address) => {
+  const withdrawing = async (amount, signer) => {
     try {
+      await setGasLimit(tokenContract, signer, stakingContract.address, amount);
       const tx = await stakingContract
-        .connect(address)
-        .withdrawing(ethers.utils.parseUnits(amount.toString(), 18));
+        .connect(toRaw(signer))
+        .withdrawing(convertIntoUnits(amount));
       await tx.wait();
-      console.log(`Withdrew ${amount} tokens successfully`);
     } catch (error) {
       console.error("Error withdrawing tokens:", error);
-      throw error;
+      throw getErrorMessage(error);
+    }
+  };
+
+  const transferERC20Tokens = async (amount, signer, address) => {
+    try {
+      await tokenContract
+        .connect(owner)
+        .transfer(address, convertIntoUnits(amount));
+    } catch (error) {
+      throw getErrorMessage(error);
     }
   };
 
@@ -136,6 +168,8 @@ export function useStakingContract() {
 
       await getAPY();
       await getContractBalance();
+
+      // Init ERC20 tokens quantity per user
     } catch (error) {
       console.error("Error initializing contracts:", error);
       throw error;
@@ -149,12 +183,14 @@ export function useStakingContract() {
     provider,
     apy,
     stakingBalance,
-    getSignerBalance,
+    getSignerEthersBalance,
     setAPY,
     getAPY,
     stake,
     withdrawing,
     getSignerAddress,
     getSignerStakingBalance,
+    getSignerTokenBalance,
+    transferERC20Tokens,
   };
 }
