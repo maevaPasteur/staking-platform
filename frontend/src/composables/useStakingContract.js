@@ -29,7 +29,7 @@ export function useStakingContract() {
   const getContractBalance = async () => {
     try {
       if (stakingContract) {
-        const balance = await provider.getBalance(stakingContract.address); // Utilisation de provider.getBalance
+        const balance = await provider.getBalance(stakingContract.address);
         stakingBalance.value = ethers.utils.formatEther(balance);
       }
     } catch (error) {
@@ -91,7 +91,7 @@ export function useStakingContract() {
           ethers.utils.parseUnits(amount.toString(), 18),
         );
       const tx = await stakingContract
-        .connect(address)
+        .connect(toRaw(signer))
         .stake(ethers.utils.parseUnits(amount.toString(), 18));
       await tx.wait();
     } catch (error) {

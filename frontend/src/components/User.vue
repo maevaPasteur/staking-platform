@@ -15,7 +15,7 @@
                     <p>Stake balance: <strong>{{ stakeBalanceFormatted }} tokens</strong></p>
                 </v-col>
             </v-row>
-            <v-list lines="two" v-if="false">
+            <v-list lines="two">
                 <v-list-item>
                     <h4>Stake</h4>
                     <v-form @submit.prevent="handleStakeSubmit" class="user__form">
