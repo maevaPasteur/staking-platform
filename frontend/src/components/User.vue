@@ -11,9 +11,9 @@
                     <h3>{{ name }}</h3>
                 </v-col>
                 <v-col class="text-no-wrap text-left" cols="5" sm="3">
-                    <p>Balance: <strong>{{ formatBalance(ethersBalance) }} ETH</strong></p>
-                    <p>Token balance: <strong>{{ formatBalance(tokenBalance) }} tokens</strong></p>
-                    <p>Stake balance: <strong>{{ formatBalance(stakeBalance) }} tokens</strong></p>
+                    <p>Balance: <strong>{{ formatToken(ethersBalance) }} ETH</strong></p>
+                    <p>Token balance: <strong>{{ formatToken(tokenBalance) }} token</strong></p>
+                    <p>Stake balance: <strong>{{ formatToken(stakeBalance) }} token</strong></p>
                 </v-col>
             </v-row>
             <v-list lines="two">
@@ -50,8 +50,11 @@
 import { ref, onMounted } from "vue";
 import { ethers } from 'ethers';
 import { VNumberInput } from 'vuetify/labs/VNumberInput'
+import { useFormatToken } from "../composables/useFormatToken.js"
 
 const props = defineProps(["name", "signer", "getSignerEthersBalance", "avatar", "stake", "withdrawing", "getSignerAddress", "getSignerStakingBalance", "getSignerTokenBalance", "transferERC20Tokens"]);
+
+const { formatToken } = useFormatToken();
 
 const inputAttrs = {
     type: "number",
@@ -113,10 +116,6 @@ const handleWithdrawingSubmit = async () => {
     } catch(error) {
         errorMessage.value = error;
     }
-}
-
-const formatBalance = value => {
-    return value ? parseFloat(ethers.utils.formatEther(value)).toFixed(2) : '0.00';
 }
 
 onMounted(async () => {

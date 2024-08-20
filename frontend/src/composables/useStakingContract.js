@@ -15,7 +15,7 @@ export function useStakingContract() {
   const tom = ref(null);
   const isInitialized = ref(false);
   const apy = ref(null);
-  const stakingBalance = ref(null);
+  const totalStakedBalance = ref(null);
 
   const convertIntoUnits = (amount) => {
     return ethers.utils.parseUnits(amount.toString(), 18);
@@ -46,14 +46,11 @@ export function useStakingContract() {
     }
   };
 
-  const getContractBalance = async () => {
+  const getTotalStakedBalance = async () => {
     try {
-      if (stakingContract) {
-        const balance = await provider.getBalance(stakingContract.address);
-        stakingBalance.value = ethers.utils.formatEther(balance);
-      }
+      totalStakedBalance.value = await stakingContract.totalStakedBalance();
     } catch (error) {
-      console.error("Error fetching contract balance:", error);
+      console.error("Error getting contract total staked balance:", error);
       throw error;
     }
   };
@@ -115,6 +112,7 @@ export function useStakingContract() {
         .connect(toRaw(signer))
         .stake(convertIntoUnits(amount));
       await tx.wait();
+      getTotalStakedBalance();
     } catch (error) {
       console.error("Error staking tokens:", error);
       throw getErrorMessage(error);
@@ -128,6 +126,7 @@ export function useStakingContract() {
         .connect(toRaw(signer))
         .withdrawing(convertIntoUnits(amount));
       await tx.wait();
+      getTotalStakedBalance();
     } catch (error) {
       console.error("Error withdrawing tokens:", error);
       throw getErrorMessage(error);
@@ -166,7 +165,7 @@ export function useStakingContract() {
       isInitialized.value = true;
 
       await getAPY();
-      await getContractBalance();
+      await getTotalStakedBalance();
 
       // Init ERC20 tokens quantity per user
     } catch (error) {
@@ -181,7 +180,7 @@ export function useStakingContract() {
     tom,
     provider,
     apy,
-    stakingBalance,
+    totalStakedBalance,
     getSignerEthersBalance,
     setAPY,
     getAPY,
