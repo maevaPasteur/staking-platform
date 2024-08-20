@@ -18,8 +18,7 @@
     "eslint:fix": "npx eslint --fix .",
     "frontend:dev": "npm --prefix frontend run dev",
     "frontend:build": "npm --prefix frontend run build",
-    "frontend:lint": "npm --prefix frontend run lint",
-    "frontend:serve": "npm --prefix frontend run serve"
+    "frontend:lint": "npm --prefix frontend run lint"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.0",

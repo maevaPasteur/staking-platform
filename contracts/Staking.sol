@@ -35,6 +35,9 @@ contract Staking {
     /// @notice Array of user with their balance, last withdrawal date & rewards earned
     mapping(address => User[]) public users;
 
+    /// @notice Total of staked token balance
+    uint256 public totalStakedBalance;
+
     // Custom errors
     error OnlyOwner();
     error AmountMustBeGreaterThanZero();
@@ -89,6 +92,7 @@ contract Staking {
             currentUser.balance += _amount;
             currentUser.lastWithdrawalDate = block.timestamp;
         }
+        totalStakedBalance += _amount;
     }
 
     /**
@@ -155,9 +159,13 @@ contract Staking {
         // Update user infos
         currentUser.balance -= _amount;
 
+        // Update total staked
+        totalStakedBalance -= _amount;
+
         // Calculate user rewards
         uint256 elapsedTime = block.timestamp - currentUser.lastWithdrawalDate;
-        uint256 rewards = (currentUser.balance * apy * elapsedTime) / (365 days * 100);
+        uint256 rewards = (currentUser.balance * apy * elapsedTime) /
+            (365 days * 100);
         currentUser.rewards += rewards;
 
         // Update user last withdrawing date
@@ -175,7 +183,8 @@ contract Staking {
 
         // Calculate rewards
         uint256 elapsedTime = block.timestamp - currentUser.lastWithdrawalDate;
-        uint256 rewards = (currentUser.balance * apy * elapsedTime) / (365 days * 100);
+        uint256 rewards = (currentUser.balance * apy * elapsedTime) /
+            (365 days * 100);
         currentUser.rewards += rewards;
 
         // Update last withdrawing date
