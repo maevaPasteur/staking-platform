@@ -81,17 +81,16 @@ export function useStakingContract() {
     try {
       return await tokenContract.balanceOf(address);
     } catch (error) {
-      console.log("Error fetching signer token balance:", error);
+      console.error("Error fetching signer token balance:", error);
+      throw error;
     }
   };
 
   const getAPY = async () => {
-    if (stakingContract) {
-      try {
-        apy.value = await stakingContract.apy();
-      } catch (error) {
-        console.error("Error calling apy():", error);
-      }
+    try {
+      apy.value = await stakingContract.apy();
+    } catch (error) {
+      throw error;
     }
   };
 

@@ -2,13 +2,9 @@
 
 ## Project Overview
 
-You will be developing a **staking platform** in Solidity, where users can stake ERC20 tokens and earn rewards with variable Annual Percentage Yields (APY). This project is designed to help you build strong foundational skills in Solidity and prepare you for real-world development work.
-
-# Staking Platform
-
 This project is a Solidity-based staking platform using the Hardhat framework and an ERC20 token. The frontend is developed using Vue.js.
 
-## Project Setup
+### Project Setup
 
 Before starting, ensure you have the following installed on your machine:
 
@@ -31,7 +27,7 @@ cd frontend
 npm install
 ```
 
-## Environment Variables
+### Environment Variables
 
 Create a .env file at the root of the project to configure the environment variables. You can use the .env.example file as a reference.
 
@@ -46,9 +42,7 @@ STAKING_ADDRESS=
 TOKEN_ADDRESS=
 ```
 
-## Commands
-
-### Hardhat (Solidity)
+### Commands
 
 - Compile Solidity contracts: `npm run compile`
 - Run tests : `npm run test`
@@ -57,27 +51,18 @@ TOKEN_ADDRESS=
 - Generate test coverage: `npm run coverage`
 - Lint Solidity contracts: `npm run lint:sol`
 - Fix Solidity linting issues: `npm run lint:fix`
+- Serve the built frontend locally: `npm run frontend:dev`
 
-### Frontend (Vue.js)
 
-- Start the development server: `npm run frontend:dev`
-- Serve the built frontend locally: `npm run frontend:serve`
+---
 
 ## Running the Project
 
-1. Start the local Hardhat node:
-```
-npm run node
-```
-2. Deploy the contracts to the local network. In a new terminal, run: 
-```
-npm run deploy
-```
-3. Start the frontend development server. Navigate to the `frontend` directory and run:
-```
-npm run frontend:dev
-```
-4. From the previous console, copy and paste the values of token contract and staking contract into the file `.env`
-5. Access the frontend:
-   Open your browser and navigate to `http://localhost:3000` or the port specified by the development server.
-
+1. `npm install`
+2. `cd frontend && pnpm install && cd ../`
+3. `npx hardhat compile`
+4. `npx hardhat node`
+5. In a new terminal : `npx hardhat run scripts/deploy.js --network localhost`
+6. Copy & paste the contracts addresses into `.env`
+7. `npm run frontend:dev`
+8. Open your localhost
