@@ -16,14 +16,16 @@
                                 :stake="stake"
                                 :withdrawing="withdrawing"
                                 :getSignerAddress="getSignerAddress"
-                                :getSignerBalance="getSignerBalance"
+                                :getSignerEthersBalance="getSignerEthersBalance"
                                 :getSignerStakingBalance="getSignerStakingBalance"
+                                :getSignerTokenBalance="getSignerTokenBalance"
+                                :transferERC20Tokens="transferERC20Tokens"
                         />
                     </v-col>
 
                     <v-col cols="6">
                         <h2 class="mb-3">Staking</h2>
-                        <v-card title="Balance" :text="`${stakingBalance} ETH`"/>
+                        <v-card v-if="totalStakedBalance" title="Balance" :text="`${formatToken(totalStakedBalance)} token`"/>
                         <br>
                         <v-card title="APY" :text="`Current value : ${apy}%`">
                             <v-card-item>
@@ -54,20 +56,25 @@ import { ref, watch } from 'vue';
 import User from './components/User.vue';
 import { useStakingContract } from './composables/useStakingContract.js';
 import { VNumberInput } from 'vuetify/labs/VNumberInput'
+import { useFormatToken } from './composables/useFormatToken.js';
 
 const {
     julia,
     tom,
     isInitialized,
     apy,
-    stakingBalance,
-    getSignerBalance,
+    totalStakedBalance,
+    getSignerEthersBalance,
     setAPY,
     stake,
     withdrawing,
     getSignerAddress,
     getSignerStakingBalance,
+    getSignerTokenBalance,
+    transferERC20Tokens,
 } = useStakingContract();
+
+const { formatToken } = useFormatToken();
 
 const newAPY = ref();
 
